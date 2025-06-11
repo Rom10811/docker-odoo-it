@@ -98,7 +98,7 @@ target "17" {
     args = {
         ODOO_VERSION="17.0"
         DISTRIBUTION="bookworm"
-        PYTHON_VERSION="3.12"
+        PYTHON_VERSION="3.11"
         WKHTMLTOPDF_VERSION="0.12.6"
     }
 }
@@ -109,7 +109,7 @@ target "18" {
     args = {
         ODOO_VERSION="18.0"
         DISTRIBUTION="bookworm"
-        PYTHON_VERSION="3.12"
+        PYTHON_VERSION="3.11"
         WKHTMLTOPDF_VERSION="0.12.6"
     }
 }

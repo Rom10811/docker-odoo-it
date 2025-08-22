@@ -1,5 +1,5 @@
 variable "REGISTRY" {
-    default = "ghcr.io/odoo-it/docker-odoo"
+    default = "ghcr.io/rom10811/docker-odoo-it"
 }
 
 variable "VERSION" {
@@ -112,6 +112,18 @@ target "18" {
         PYTHON_VERSION="3.11"
         WKHTMLTOPDF_VERSION="0.12.6"
     }
+}
+
+target "18-argo" {
+    inherits = ["_common"]
+    platforms = ["linux/amd64", "linux/arm64"]
+    args = {
+        ODOO_VERSION="18.0"
+        DISTRIBUTION="bookworm"
+        PYTHON_VERSION="3.11"
+        WKHTMLTOPDF_VERSION="0.12.6"
+    }
+    output = ["type=registry"]
 }
 
 target "master" {

@@ -1,0 +1,28 @@
+#!/bin/bash
+# init-odoo.sh
+
+set -e
+
+# Variables d'environnement avec defaults
+DB_NAME=${DB_NAME}
+MODULES=${MODULES}
+LANGUAGE=${LANGUAGE}
+ODOO_ARGS=${ODOO_ARGS}
+
+log() {
+    echo "[$(date '+%H:%M:%S')] $1"
+}
+
+log "Initializing Odoo database: DB_NAME"
+log "Installing modules: $MODULES"
+
+# Commande d'init simple
+odoo \
+    -d "$DB_NAME" \
+    --init=="$MODULES" \
+    --load-language="$LANGUAGE" \
+    --no-xmlrpc \
+    --stop-after-init \
+    $ODOO_ARGS
+
+log "Odoo initialization completed!"

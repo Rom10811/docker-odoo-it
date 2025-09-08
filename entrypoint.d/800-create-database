@@ -13,7 +13,7 @@ log() {
     echo "[$(date '+%H:%M:%S')] $1"
 }
 
-log "Initializing Odoo database: DB_NAME"
+log "Initializing Odoo database: $DB_NAME"
 log "Installing modules: $MODULES"
 
 # Commande d'init simple

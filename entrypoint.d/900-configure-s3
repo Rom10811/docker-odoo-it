@@ -1,0 +1,78 @@
+#!/bin/bash
+# init-fs-attachment.sh
+
+set -e
+
+# Variables d'environnement avec defaults
+DB_NAME=${DB_NAME}
+LANGUAGE=${LANGUAGE:-"fr_FR"}
+ODOO_ARGS=${ODOO_ARGS}
+
+# Variables spécifiques pour fs.storage
+FS_STORAGE_NAME=${FS_STORAGE_NAME:-"default_storage"}
+FS_STORAGE_CODE=${FS_STORAGE_CODE:-"default"}
+FS_STORAGE_PROTOCOL=${FS_STORAGE_PROTOCOL:-"file"}
+FS_STORAGE_DIRECTORY_PATH=${FS_STORAGE_DIRECTORY_PATH:-"/opt/odoo/filestore"}
+FS_STORAGE_OPTIONS=${FS_STORAGE_OPTIONS:-"{}"}
+
+log() {
+    echo "[$(date '+%H:%M:%S')] $1"
+}
+
+log "Initializing Odoo with fs_attachment module"
+log "Database: $DB_NAME"
+
+# 1. Installation du module fs_attachment
+log "Installing fs_attachment module..."
+odoo \
+    -d "$DB_NAME" \
+    --init="fs_attachment" \
+    --load-language="$LANGUAGE" \
+    --no-xmlrpc \
+    --stop-after-init \
+    $ODOO_ARGS
+
+# 2. Création du record fs.storage via script Python
+log "Creating fs.storage record..."
+python3 << EOF
+import odoo
+from odoo import api, SUPERUSER_ID
+import os
+
+# Configuration de la base
+odoo.tools.config.parse_config([
+    '-d', '$DB_NAME',
+    '--no-xmlrpc'
+])
+
+# Initialisation du registre
+registry = odoo.registry('$DB_NAME')
+
+with registry.cursor() as cr:
+    env = api.Environment(cr, SUPERUSER_ID, {})
+
+    # Vérification si le record existe déjà
+    existing_storage = env['fs.storage'].search([('code', '=', '$FS_STORAGE_CODE')])
+
+    if not existing_storage:
+        # Création du record fs.storage
+        storage_vals = {
+            'name': '$FS_STORAGE_NAME',
+            'code': '$FS_STORAGE_CODE',
+            'protocol': 's3',
+            'directory_path': '$FS_STORAGE_DIRECTORY_PATH',
+            'options': '$FS_STORAGE_OPTIONS',
+            'optimizes_directory_path': True,
+            'use_as_default_for_attachments': True,
+        }
+
+        storage = env['fs.storage'].create(storage_vals)
+        print(f"Created fs.storage record: {storage.name} (ID: {storage.id})")
+    else:
+        print(f"fs.storage record already exists: {existing_storage.name} (ID: {existing_storage.id})")
+
+    # Commit des changements
+    cr.commit()
+EOF
+
+log "fs_attachment module installation and configuration completed!"

@@ -15,6 +15,12 @@ FS_STORAGE_PROTOCOL=${FS_STORAGE_PROTOCOL:-"file"}
 FS_STORAGE_DIRECTORY_PATH=${FS_STORAGE_DIRECTORY_PATH:-"/opt/odoo/filestore"}
 FS_STORAGE_OPTIONS=${FS_STORAGE_OPTIONS:-"{}"}
 
+# Variables de connexion PostgreSQL
+DB_HOST=${DB_HOST:-"localhost"}
+DB_PORT=${DB_PORT:-"5432"}
+DB_USER=${DB_USER:-"odoo"}
+DB_PASSWORD=${DB_PASSWORD:-"odoo"}
+
 log() {
     echo "[$(date '+%H:%M:%S')] $1"
 }
@@ -38,7 +44,6 @@ python3 << EOF
 import odoo
 from odoo import api, SUPERUSER_ID
 import os
-import json
 
 # Configuration de la base
 odoo.tools.config.parse_config([
@@ -64,23 +69,49 @@ with registry.cursor() as cr:
             'directory_path': '$FS_STORAGE_DIRECTORY_PATH',
             'options': '$FS_STORAGE_OPTIONS',
             'optimizes_directory_path': True,
-            'use_as_default_for_attachments': True,  # Assurez-vous que c'est bien True
+            'use_as_default_for_attachments': True,
         }
 
         storage = env['fs.storage'].create(storage_vals)
         print(f"Created fs.storage record: {storage.name} (ID: {storage.id})")
-        print(f"use_as_default_for_attachments: {storage.use_as_default_for_attachments}")
     else:
-        # Mise à jour du record existant pour s'assurer qu'il est configuré correctement
-        existing_storage.write({
-            'use_as_default_for_attachments': True,
-            'options': '$FS_STORAGE_OPTIONS',
-        })
-        print(f"Updated fs.storage record: {existing_storage.name} (ID: {existing_storage.id})")
-        print(f"use_as_default_for_attachments: {existing_storage.use_as_default_for_attachments}")
+        print(f"fs.storage record already exists: {existing_storage.name} (ID: {existing_storage.id})")
 
     # Commit des changements
     cr.commit()
 EOF
 
+# 3. Forcer la mise à jour du champ use_as_default_for_attachments via psql
+log "Forcing use_as_default_for_attachments to true via psql..."
+
+# Export du mot de passe pour psql
+export PGPASSWORD="$DB_PASSWORD"
+
+# Exécution de la commande SQL
+psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" << EOSQL
+-- Vérifier l'état avant modification
+SELECT 'BEFORE UPDATE:' as status, id, name, code, use_as_default_for_attachments
+FROM fs_storage
+WHERE code = '$FS_STORAGE_CODE';
+
+-- Mise à jour du champ
+UPDATE fs_storage
+SET use_as_default_for_attachments = 't'
+WHERE code = '$FS_STORAGE_CODE';
+
+-- Vérifier l'état après modification
+SELECT 'AFTER UPDATE:' as status, id, name, code, use_as_default_for_attachments
+FROM fs_storage
+WHERE code = '$FS_STORAGE_CODE';
+
+-- Afficher le nombre de lignes modifiées
+SELECT 'ROWS UPDATED:' as status, COUNT(*) as count
+FROM fs_storage
+WHERE code = '$FS_STORAGE_CODE' AND use_as_default_for_attachments = 't';
+EOSQL
+
+# Nettoyer la variable d'environnement du mot de passe
+unset PGPASSWORD
+
 log "fs_attachment module installation and configuration completed!"
+log "Storage '$FS_STORAGE_CODE' is now set as default for attachments"

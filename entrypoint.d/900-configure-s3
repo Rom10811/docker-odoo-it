@@ -32,7 +32,7 @@ log "Database: $DB_NAME"
 log "Installing fs_attachment module..."
 odoo \
     -d "$DB_NAME" \
-    --init="fs_attachment" \
+    --init="moka_s3" \
     --load-language="$LANGUAGE" \
     --no-xmlrpc \
     --stop-after-init \

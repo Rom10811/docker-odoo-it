@@ -29,7 +29,7 @@ log "Initializing Odoo with fs_attachment module"
 log "Database: $DB_NAME"
 
 # 1. Installation du module fs_attachment
-log "Installing fs_attachment module..."
+log "Installing moka_s3 module..."
 odoo \
     -d "$DB_NAME" \
     --init="moka_s3" \

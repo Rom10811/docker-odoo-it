@@ -92,6 +92,17 @@ target "16" {
     }
 }
 
+target "16-argo" {
+    inherits = ["_common"]
+    platforms = ["linux/amd64", "linux/arm64"]
+    args = {
+        ODOO_VERSION="16.0"
+        DISTRIBUTION="bookworm"
+        PYTHON_VERSION="3.10"
+        WKHTMLTOPDF_VERSION="0.12.6"
+    }
+}
+
 target "17" {
     inherits = ["_common"]
     platforms = ["linux/amd64", "linux/arm64"]

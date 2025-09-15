@@ -101,6 +101,7 @@ target "16-argo" {
         PYTHON_VERSION="3.10"
         WKHTMLTOPDF_VERSION="0.12.6"
     }
+    output = ["type=registry"]
 }
 
 target "17" {

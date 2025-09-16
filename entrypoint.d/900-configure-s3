@@ -34,6 +34,8 @@ odoo \
     -d "$DB_NAME" \
     --init="moka_s3" \
     --no-xmlrpc \
+    --stop-after-init \
+    $ODOO_ARGS
 
 # 2. Création du record fs.storage via script Python
 log "Creating fs.storage record..."

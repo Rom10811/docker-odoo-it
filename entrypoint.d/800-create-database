@@ -22,7 +22,6 @@ odoo \
     --init=="$MODULES" \
     --load-language="$LANGUAGE" \
     --no-xmlrpc \
-    --stop-after-init \
     $ODOO_ARGS
 
 log "Odoo initialization completed!"

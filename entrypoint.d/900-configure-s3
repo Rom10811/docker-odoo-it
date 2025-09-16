@@ -33,10 +33,7 @@ log "Installing moka_s3 module..."
 odoo \
     -d "$DB_NAME" \
     --init="moka_s3" \
-    --load-language="$LANGUAGE" \
     --no-xmlrpc \
-    --stop-after-init \
-    $ODOO_ARGS
 
 # 2. Création du record fs.storage via script Python
 log "Creating fs.storage record..."

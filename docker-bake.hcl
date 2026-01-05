@@ -20,7 +20,7 @@ group "default" {
 }
 
 group "all" {
-    targets = ["12", "13", "14", "15", "16", "17", "18", "master"]
+    targets = ["14", "15", "16", "17", "18", "19", "master"]
 }
 
 target "_local" {
@@ -34,28 +34,6 @@ target "_common" {
     inherits = ["_local", "docker-metadata-action"]
     args = {
         LOCAL_GEOIP_PATH = LOCAL_GEOIP_PATH
-    }
-}
-
-target "12" {
-    inherits = ["_common"]
-    platforms = ["linux/amd64"]
-    args = {
-        ODOO_VERSION="12.0"
-        DISTRIBUTION="buster"
-        PYTHON_VERSION="3.7"
-        WKHTMLTOPDF_VERSION="0.12.5"
-    }
-}
-
-target "13" {
-    inherits = ["_common"]
-    platforms = ["linux/amd64"]
-    args = {
-        ODOO_VERSION="13.0"
-        DISTRIBUTION="buster"
-        PYTHON_VERSION="3.7"
-        WKHTMLTOPDF_VERSION="0.12.5"
     }
 }
 
@@ -114,12 +92,24 @@ target "18" {
     }
 }
 
+
+target "19" {
+    inherits = ["_common"]
+    platforms = ["linux/amd64", "linux/arm64"]
+    args = {
+        ODOO_VERSION="19.0"
+        DISTRIBUTION="trixie"
+        PYTHON_VERSION="3.12"
+        WKHTMLTOPDF_VERSION="0.12.6"
+    }
+}
+
 target "master" {
     inherits = ["_common"]
     platforms = ["linux/amd64", "linux/arm64"]
     args = {
         ODOO_VERSION="master"
-        DISTRIBUTION="bookworm"
+        DISTRIBUTION="trixie"
         PYTHON_VERSION="3.12"
         WKHTMLTOPDF_VERSION="0.12.6"
     }

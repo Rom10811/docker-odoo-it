@@ -92,6 +92,17 @@ target "18" {
     }
 }
 
+target "183" {
+    inherits = ["_common"]
+    platforms = ["linux/amd64", "linux/arm64"]
+    args = {
+        ODOO_VERSION="saas-18.3"
+        DISTRIBUTION="bookworm"
+        PYTHON_VERSION="3.11"
+        WKHTMLTOPDF_VERSION="0.12.6"
+    }
+}
+
 
 target "19" {
     inherits = ["_common"]

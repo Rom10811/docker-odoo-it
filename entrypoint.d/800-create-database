@@ -9,9 +9,45 @@ MODULES=${MODULES}
 LANGUAGE=${LANGUAGE}
 ODOO_ARGS=${ODOO_ARGS}
 
+# Variables de connexion PostgreSQL (utilisées pour vérifier l'existence de la DB)
+PGHOST=${PGHOST:-${DB_HOST:-"localhost"}}
+PGPORT=${PGPORT:-${DB_PORT:-"5432"}}
+PGUSER=${PGUSER:-${DB_USER:-"odoo"}}
+PGPASSWORD=${PGPASSWORD:-${DB_PASSWORD:-"odoo"}}
+
+export PGPASSWORD
+
 log() {
     echo "[$(date '+%H:%M:%S')] $1"
 }
+
+# Fonction pour vérifier si la base de données existe et contient des tables Odoo
+database_exists() {
+    local db_name="$1"
+
+    # Vérifier si la base existe
+    if ! psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$db_name"; then
+        return 1
+    fi
+
+    # Vérifier si la base contient la table ir_module_module (signe d'une DB Odoo initialisée)
+    local table_count=$(psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$db_name" -tAc \
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'ir_module_module';" 2>/dev/null || echo "0")
+
+    [ "$table_count" -gt 0 ]
+}
+
+# Vérifier si la DB_NAME est définie
+if [ -z "$DB_NAME" ]; then
+    log "DB_NAME is not set, skipping database initialization"
+    exit 0
+fi
+
+# Vérifier si la base de données existe déjà
+if database_exists "$DB_NAME"; then
+    log "Database '$DB_NAME' already exists and is initialized, skipping initialization"
+    exit 0
+fi
 
 log "Initializing Odoo database: $DB_NAME"
 log "Installing modules: $MODULES"
@@ -19,7 +55,7 @@ log "Installing modules: $MODULES"
 # Commande d'init simple
 odoo \
     -d "$DB_NAME" \
-    --init=="$MODULES" \
+    --init="$MODULES" \
     --load-language="$LANGUAGE" \
     --no-xmlrpc \
     --stop-after-init \

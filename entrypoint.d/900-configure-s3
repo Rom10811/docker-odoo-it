@@ -16,26 +16,56 @@ FS_STORAGE_DIRECTORY_PATH=${FS_STORAGE_DIRECTORY_PATH:-"/opt/odoo/filestore"}
 FS_STORAGE_OPTIONS=${FS_STORAGE_OPTIONS:-"{}"}
 
 # Variables de connexion PostgreSQL
-DB_HOST=${DB_HOST:-"localhost"}
-DB_PORT=${DB_PORT:-"5432"}
-DB_USER=${DB_USER:-"odoo"}
-DB_PASSWORD=${DB_PASSWORD:-"odoo"}
+PGHOST=${PGHOST:-${DB_HOST:-"localhost"}}
+PGPORT=${PGPORT:-${DB_PORT:-"5432"}}
+PGUSER=${PGUSER:-${DB_USER:-"odoo"}}
+PGPASSWORD=${PGPASSWORD:-${DB_PASSWORD:-"odoo"}}
+
+export PGPASSWORD
 
 log() {
     echo "[$(date '+%H:%M:%S')] $1"
 }
 
+# Fonction pour vérifier si un module Odoo est installé
+module_installed() {
+    local db_name="$1"
+    local module_name="$2"
+
+    # Vérifier si le module est installé (state = 'installed')
+    local installed=$(psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$db_name" -tAc \
+        "SELECT COUNT(*) FROM ir_module_module WHERE name = '$module_name' AND state = 'installed';" 2>/dev/null || echo "0")
+
+    [ "$installed" -gt 0 ]
+}
+
+# Vérifier si la DB_NAME est définie
+if [ -z "$DB_NAME" ]; then
+    log "DB_NAME is not set, skipping S3 configuration"
+    exit 0
+fi
+
+# Vérifier si FS_STORAGE_OPTIONS est défini et non vide (autre que "{}")
+if [ -z "$FS_STORAGE_OPTIONS" ] || [ "$FS_STORAGE_OPTIONS" = "{}" ]; then
+    log "FS_STORAGE_OPTIONS is not configured, skipping S3 configuration"
+    exit 0
+fi
+
 log "Initializing Odoo with fs_attachment module"
 log "Database: $DB_NAME"
 
-# 1. Installation du module fs_attachment
-log "Installing moka_s3 module..."
-odoo \
-    -d "$DB_NAME" \
-    --init="moka_s3" \
-    --no-xmlrpc \
-    --stop-after-init \
-    $ODOO_ARGS
+# 1. Installation du module moka_s3 (seulement si pas déjà installé)
+if module_installed "$DB_NAME" "moka_s3"; then
+    log "Module moka_s3 is already installed, skipping installation"
+else
+    log "Installing moka_s3 module..."
+    odoo \
+        -d "$DB_NAME" \
+        --init="moka_s3" \
+        --no-xmlrpc \
+        --stop-after-init \
+        $ODOO_ARGS
+fi
 
 # 2. Création du record fs.storage via script Python
 log "Creating fs.storage record..."
